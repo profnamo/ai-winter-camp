@@ -4,9 +4,9 @@
 
 ## 바로 열기 (GitHub Pages)
 
-- 시작 화면: https://bctcaiedu.github.io/ai-winter-camp/
-- 퀴즈쇼: https://bctcaiedu.github.io/ai-winter-camp/quiz.html
-- 게임 제작 미션카드: https://bctcaiedu.github.io/ai-winter-camp/mission.html
+- 시작 화면: https://profnamo.github.io/ai-winter-camp/
+- 퀴즈쇼: https://profnamo.github.io/ai-winter-camp/quiz.html
+- 게임 제작 미션카드: https://profnamo.github.io/ai-winter-camp/mission.html
 
 ## 폴더 구성
 
