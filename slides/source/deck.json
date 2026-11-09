@@ -1,0 +1,20 @@
+{
+  "v": 4,
+  "createdOnFiles": {"v": 1, "at": "2026-11-09T12:00:00Z"},
+  "lists": "css",
+  "title": "AI를 이겨라",
+  "order": ["cover", "agenda", "quiz", "nextword", "chain", "probability", "hallucination", "teach", "breakit", "battle", "judging", "coach", "line", "closing"],
+  "sections": {
+    "s0": {"description": "오프닝과 오늘의 순서", "start": "cover"},
+    "s1": {"description": "1판: AI냐 진짜냐 퀴즈쇼", "start": "quiz"},
+    "s2": {"description": "2판: AI는 다음 단어를 맞히는 기계이고, 그래서 환각이 생긴다", "start": "nextword"},
+    "s3": {"description": "3판: Teachable Machine으로 AI를 직접 가르치고 망쳐 보기", "start": "teach"},
+    "s4": {"description": "4판: 팀별 AI 게임 제작 배틀", "start": "battle"},
+    "s5": {"description": "5판: 고등학생이 되기 전에 알아 둘 AI 사용법과 마무리", "start": "coach"}
+  },
+  "faces": {
+    "black-han-sans": {"family": "Black Han Sans", "href": "https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap"},
+    "ibm-plex-sans-kr": {"family": "IBM Plex Sans KR", "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;700&display=swap"}
+  },
+  "designSystems": []
+}

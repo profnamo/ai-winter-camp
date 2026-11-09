@@ -1,0 +1,237 @@
+<title>AI 게임 제작 미션카드</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: 레벨업 미션 보드. 한 줄로 이어지는 LV 카드, 카드마다 복사할 주문(프롬프트) 상자. */
+:root {
+  --paper: #f2f5f9;
+  --card: #ffffff;
+  --ink: #18222e;
+  --ink-dim: #556577;
+  --line: #d5dde7;
+  --accent: #2c6be0;
+  --accent-ink: #ffffff;
+  --spell: #eaf1fd;
+  --spell-ink: #163a7a;
+  --warn: #c2410c;
+  --font-display: "Do Hyeon", "IBM Plex Sans KR", "Malgun Gothic", sans-serif;
+  --font-body: "IBM Plex Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121921; --card: #1a2430; --ink: #e8eef5; --ink-dim: #9aabbd; --line: #2c3a4a;
+    --accent: #6a9cf5; --accent-ink: #0d1520; --spell: #1d2c44; --spell-ink: #c8daf9; --warn: #fb923c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121921; --card: #1a2430; --ink: #e8eef5; --ink-dim: #9aabbd; --line: #2c3a4a;
+  --accent: #6a9cf5; --accent-ink: #0d1520; --spell: #1d2c44; --spell-ink: #c8daf9; --warn: #fb923c;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(34px, 5vw, 52px); }
+.lede { margin: 8px 0 0; color: var(--ink-dim); max-width: 62ch; }
+.eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; color: var(--accent); }
+
+.intro { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; min-width: 0; }
+.box h2 { font-size: 24px; margin-bottom: 8px; }
+.box ul, .box ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+
+.formula { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 6px 0 10px; }
+.formula span { background: var(--spell); color: var(--spell-ink); font-weight: 700; padding: 4px 10px; border-radius: 8px; }
+.formula i { font-style: normal; color: var(--ink-dim); }
+.compare { display: grid; gap: 6px; font-size: 15px; }
+.compare .bad { color: var(--warn); }
+.compare .good { color: var(--accent); }
+
+.levels { display: grid; gap: 18px; }
+.level { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 4px 20px; }
+@media (max-width: 560px) { .level { grid-template-columns: minmax(0, 1fr); } }
+.lv { font-family: var(--font-display); color: var(--accent); line-height: 1; }
+.lv b { display: block; font-size: 48px; font-weight: 400; }
+.lv small { font-size: 15px; color: var(--ink-dim); font-family: var(--font-body); font-weight: 700; }
+.level h3 { font-size: 28px; }
+.level .goal { margin: 2px 0 12px; color: var(--ink-dim); }
+.level .body { display: grid; gap: 12px; min-width: 0; }
+
+.spell { background: var(--spell); color: var(--spell-ink); border-radius: 12px; padding: 14px 16px; display: grid; gap: 8px; }
+.spell p { margin: 0; white-space: pre-wrap; font-weight: 500; }
+.spell .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.spell .tag { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; opacity: 0.8; }
+.copy { font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; border: 0; border-radius: 8px; padding: 5px 12px; background: var(--accent); color: var(--accent-ink); }
+.copy:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.tip { font-size: 15px; color: var(--ink-dim); margin: 0; }
+.tip b { color: var(--ink); }
+
+.ideas { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.idea { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.idea b { display: block; font-family: var(--font-display); font-weight: 400; font-size: 21px; }
+.idea span { font-size: 14px; color: var(--ink-dim); }
+
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 700; }
+td.pts { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 700; color: var(--accent); }
+.table-scroll { overflow-x: auto; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">팀 미션 · 40~50분</div>
+    <h1>코딩 몰라도 게임 만든다</h1>
+    <p class="lede">코드는 AI가 쓰고, 너희는 말로 시킨다. 레벨을 하나씩 깨면서 우리 팀만의 게임을 완성하고, 마지막에 발표해서 우승팀을 뽑는다. 주문 상자의 글은 복사해서 그대로 붙여 넣어도 되고, 마음대로 바꿔도 된다.</p>
+  </header>
+
+  <section class="intro">
+    <div class="box">
+      <h2>시작 전에</h2>
+      <ul>
+        <li>팀당 노트북 1대, 부모님 계정으로 AI 채팅(Claude, ChatGPT, Gemini 중 하나)을 열어 둔다.</li>
+        <li>AI가 만든 게임은 채팅창 옆 <b>미리보기 화면</b>에서 바로 실행된다.</li>
+        <li>미리보기가 안 뜨면: 코드를 복사해 메모장에 붙여 넣고 <b>game.html</b>로 저장한 뒤 더블클릭.</li>
+        <li>키보드 담당과 아이디어 담당을 레벨마다 바꾼다.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h2>잘 먹히는 주문 공식</h2>
+      <div class="formula"><span>무엇을</span><i>+</i><span>어떻게 움직이고</span><i>+</i><span>조건</span><i>+</i><span>분위기</span></div>
+      <div class="compare">
+        <div><b class="bad">대충:</b> 게임 만들어줘</div>
+        <div><b class="good">제대로:</b> 위에서 떨어지는 운석을 좌우 화살표로 피하는 게임. 오래 버틸수록 점수가 오르고, 부딪히면 게임오버. 우주 배경에 네온 느낌으로.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="levels">
+
+    <article class="level">
+      <div class="lv"><small>LEVEL</small><b>1</b></div>
+      <div class="body">
+        <div><h3>일단 돌아가게</h3><p class="goal">5분 · 기본 피하기 게임 띄우기</p></div>
+        <div class="spell"><div class="row"><span class="tag">주문</span><button class="copy">복사</button></div>
+<p>HTML 파일 하나로 실행되는 피하기 게임을 만들어줘.
+- 화면 아래의 캐릭터를 키보드 왼쪽/오른쪽 화살표로 움직인다.
+- 위에서 장애물이 랜덤으로 떨어진다.
+- 피한 시간만큼 점수가 오르고, 부딪히면 게임오버 화면에 점수가 나온다.
+- 스페이스바를 누르면 다시 시작한다.</p></div>
+        <p class="tip"><b>성공 기준:</b> 캐릭터가 움직이고, 부딪히면 게임오버가 뜬다.</p>
+      </div>
+    </article>
+
+    <article class="level">
+      <div class="lv"><small>LEVEL</small><b>2</b></div>
+      <div class="body">
+        <div><h3>우리 팀 색깔 입히기</h3><p class="goal">10분 · 테마를 정해서 바꾸기</p></div>
+        <p class="tip">팀에서 테마를 하나 고른다. 아래는 예시일 뿐이고, 새로 생각해 내면 보너스.</p>
+        <div class="pick">
+          <div class="spell"><div class="row"><span class="tag">우주</span><button class="copy">복사</button></div><p>배경을 별이 흐르는 우주로 바꾸고, 캐릭터는 🚀, 떨어지는 건 ☄️ 운석으로 바꿔줘.</p></div>
+          <div class="spell"><div class="row"><span class="tag">급식실</span><button class="copy">복사</button></div><p>배경을 학교 급식실로 바꾸고, 캐릭터는 식판, 떨어지는 건 🥦 브로콜리랑 🐟 생선으로 바꿔줘. 가끔 🍗 치킨이 떨어지면 먹어서 점수 +10.</p></div>
+          <div class="spell"><div class="row"><span class="tag">시험 기간</span><button class="copy">복사</button></div><p>캐릭터는 학생, 떨어지는 건 📝 시험지와 📚 문제집으로 바꿔줘. 화면 위에 '기말고사까지 D-?' 글자가 나오게 해줘.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="level">
+      <div class="lv"><small>LEVEL</small><b>3</b></div>
+      <div class="body">
+        <div><h3>규칙 추가로 더 재밌게</h3><p class="goal">10분 · 최소 2개 추가</p></div>
+        <div class="pick">
+          <div class="spell"><div class="row"><span class="tag">난이도</span><button class="copy">복사</button></div><p>10초가 지날 때마다 장애물이 조금씩 빨라지고 더 많이 떨어지게 해줘.</p></div>
+          <div class="spell"><div class="row"><span class="tag">생명</span><button class="copy">복사</button></div><p>하트 3개로 시작하고, 부딪힐 때마다 하트가 하나씩 줄어. 다 없어지면 게임오버. 부딪힌 직후 1초 동안은 깜빡이면서 무적.</p></div>
+          <div class="spell"><div class="row"><span class="tag">아이템</span><button class="copy">복사</button></div><p>가끔 ⭐ 별이 떨어지는데, 먹으면 3초 동안 무적이 되고 캐릭터가 반짝여.</p></div>
+          <div class="spell"><div class="row"><span class="tag">최고 기록</span><button class="copy">복사</button></div><p>최고 점수를 저장해서 화면 오른쪽 위에 'BEST: 점수'로 보여줘. 새로고침해도 남아 있게.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="level">
+      <div class="lv"><small>LEVEL</small><b>4</b></div>
+      <div class="body">
+        <div><h3>버그 잡기</h3><p class="goal">수시로 · 이상하면 바로 AI에게 신고</p></div>
+        <p class="tip">"안 돼"라고만 하면 AI도 모른다. 세 가지를 꼭 말해 준다: <b>무엇을 했더니</b> → <b>어떻게 됐고</b> → <b>원래는 어떻게 되길 원하는지.</b></p>
+        <div class="spell"><div class="row"><span class="tag">버그 신고 예시</span><button class="copy">복사</button></div><p>게임오버가 된 다음에 스페이스바를 눌렀는데 아무 일도 안 일어나. 스페이스바를 누르면 점수가 0으로 돌아가고 처음부터 다시 시작했으면 좋겠어. 고쳐줘.</p></div>
+        <p class="tip">하나를 고쳤더니 다른 게 망가지면: "방금 바꾼 거 되돌리고 다른 방법으로 해줘."</p>
+      </div>
+    </article>
+
+    <article class="level">
+      <div class="lv"><small>LEVEL</small><b>5</b></div>
+      <div class="body">
+        <div><h3>우리만의 한 방</h3><p class="goal">10분 · 다른 팀이 안 할 것 하나</p></div>
+        <div class="pick">
+          <div class="spell"><div class="row"><span class="tag">효과음</span><button class="copy">복사</button></div><p>아이템 먹을 때, 부딪힐 때, 게임오버 때 짧은 효과음이 나게 해줘. 소리 파일 없이 코드로 만들어서.</p></div>
+          <div class="spell"><div class="row"><span class="tag">보스</span><button class="copy">복사</button></div><p>30초를 버티면 화면 위에 거대한 보스가 나타나서 좌우로 움직이며 장애물을 쏘게 해줘.</p></div>
+          <div class="spell"><div class="row"><span class="tag">2인용</span><button class="copy">복사</button></div><p>2인용 모드를 추가해줘. 1P는 A/D 키, 2P는 왼쪽/오른쪽 화살표. 먼저 하트를 다 잃는 사람이 패배.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="level">
+      <div class="lv"><small>LEVEL</small><b>6</b></div>
+      <div class="body">
+        <div><h3>발표 준비</h3><p class="goal">5분 · 팀당 2분 발표</p></div>
+        <ol>
+          <li>게임 이름과 한 줄 소개</li>
+          <li>가장 자신 있는 기능 시연</li>
+          <li>AI가 제일 말 안 들었던 순간과 어떻게 해결했는지</li>
+          <li>다른 팀 대표가 직접 한 판 플레이</li>
+        </ol>
+      </div>
+    </article>
+  </section>
+
+  <section class="box">
+    <h2>피하기 게임 말고 다른 걸 하고 싶다면</h2>
+    <div class="ideas" style="margin-top:10px">
+      <div class="idea"><b>반응속도 테스트</b><span>화면이 초록색으로 바뀌는 순간 클릭. 0.001초 단위로 순위표.</span></div>
+      <div class="idea"><b>친구 TMI 퀴즈</b><span>우리끼리만 아는 문제 10개로 만드는 퀴즈 게임.</span></div>
+      <div class="idea"><b>2인용 탁구</b><span>한 키보드로 둘이 하는 퐁 게임. 공이 점점 빨라짐.</span></div>
+      <div class="idea"><b>타자 연습 게임</b><span>떨어지는 단어를 바닥에 닿기 전에 타자로 쳐서 없애기.</span></div>
+    </div>
+  </section>
+
+  <section class="box">
+    <h2>심사 기준</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>항목</th><th>보는 것</th><th>배점</th></tr></thead>
+        <tbody>
+          <tr><td>재미</td><td>다른 팀이 직접 해 보고 "한 판 더"를 외쳤는가</td><td class="pts">30점</td></tr>
+          <tr><td>독창성</td><td>우리 팀만 생각해 낸 테마나 규칙이 있는가</td><td class="pts">30점</td></tr>
+          <tr><td>완성도</td><td>버그 없이 시작부터 게임오버, 재시작까지 돌아가는가</td><td class="pts">20점</td></tr>
+          <tr><td>발표</td><td>AI랑 씨름한 이야기를 재밌게 전했는가</td><td class="pts">20점</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+document.querySelectorAll(".copy").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const p = btn.closest(".spell").querySelector("p");
+    const text = p.textContent.trim();
+    const done = () => { btn.textContent = "복사됨"; setTimeout(() => btn.textContent = "복사", 1500); };
+    const fallback = () => {
+      const r = document.createRange(); r.selectNodeContents(p);
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = "Ctrl+C로 복사"; setTimeout(() => btn.textContent = "복사", 2500);
+    };
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+  });
+});
+</script>

@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>AI냐 진짜냐 퀴즈쇼</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: 퀴즈쇼 무대. 왼쪽 큰 문제판, 오른쪽 점수판. TV에 띄우는 단일 다크 테마(의도적). */
+:root {
+  color-scheme: dark;
+  --stage: #10233a;
+  --stage-2: #183250;
+  --panel: #1f3d60;
+  --line: #2f5379;
+  --ink: #f3f1e8;
+  --ink-dim: #a9bcd3;
+  --gold: #ffc83d;
+  --o: #4aa3ff;
+  --x: #ff5d5d;
+  --font-show: "Black Han Sans", "IBM Plex Sans KR", "Malgun Gothic", sans-serif;
+  --font-body: "IBM Plex Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--stage); }
+body {
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: clamp(15px, 1.15vw, 19px);
+  line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, #24507e 0%, transparent 70%),
+    var(--stage);
+  min-height: 100%;
+}
+.wrap { max-width: 1400px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+h1 {
+  font-family: var(--font-show); font-weight: 400;
+  font-size: clamp(34px, 4.4vw, 64px); line-height: 1.05; margin: 0;
+  letter-spacing: 0.01em; text-wrap: balance;
+}
+h1 .vs { color: var(--gold); }
+.sub { color: var(--ink-dim); margin: 6px 0 0; }
+nav.rounds { display: flex; flex-wrap: wrap; gap: 8px; }
+nav.rounds button {
+  font: inherit; font-weight: 700; cursor: pointer;
+  background: transparent; color: var(--ink-dim);
+  border: 2px solid var(--line); border-radius: 999px; padding: 8px 18px;
+}
+nav.rounds button[aria-selected="true"] { background: var(--gold); color: var(--stage); border-color: var(--gold); }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+
+.board {
+  background: var(--stage-2); border: 2px solid var(--line); border-radius: 18px;
+  padding: clamp(18px, 3vw, 40px); min-width: 0;
+}
+.round-label { font-family: var(--font-show); color: var(--gold); font-size: clamp(18px, 1.6vw, 24px); letter-spacing: 0.04em; }
+.round-title { font-family: var(--font-show); font-weight: 400; font-size: clamp(26px, 2.8vw, 42px); margin: 2px 0 12px; line-height: 1.2; text-wrap: balance; }
+.rule { color: var(--ink-dim); margin: 0 0 20px; max-width: 70ch; }
+
+.counter { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-variant-numeric: tabular-nums; color: var(--ink-dim); font-weight: 700; }
+.dots { display: flex; gap: 6px; flex-wrap: wrap; }
+.dots span { width: 12px; height: 12px; border-radius: 50%; background: var(--line); }
+.dots span.on { background: var(--gold); }
+
+.question {
+  font-size: clamp(24px, 2.6vw, 44px); font-weight: 700; line-height: 1.4;
+  min-height: 3.2em; margin: 0 0 24px; text-wrap: pretty;
+}
+.prompt-q { font-family: var(--font-body); background: var(--panel); border-radius: 12px; padding: 16px 20px; display: block; }
+
+.ox { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.ox .big {
+  flex: 1 1 200px; font: inherit; font-family: var(--font-show); font-size: clamp(22px, 2.2vw, 34px);
+  border-radius: 16px; padding: 18px 12px; cursor: pointer; border: 3px solid transparent; color: var(--stage);
+}
+.big.o { background: var(--o); }
+.big.x { background: var(--x); }
+.big .mark { font-size: 1.5em; display: block; line-height: 1; margin-bottom: 4px; }
+
+.reveal {
+  border-radius: 14px; padding: 18px 22px; margin-bottom: 20px;
+  background: var(--panel); border-left: 8px solid var(--gold);
+}
+.reveal .verdict { font-family: var(--font-show); font-size: clamp(26px, 2.6vw, 40px); line-height: 1.2; }
+.reveal.true .verdict { color: var(--o); }
+.reveal.false .verdict { color: var(--x); }
+.reveal p { margin: 6px 0 0; max-width: 70ch; }
+.reveal .ans { color: var(--gold); font-weight: 700; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
+.btn {
+  font: inherit; font-weight: 700; cursor: pointer; border-radius: 10px; padding: 10px 18px;
+  background: transparent; color: var(--ink); border: 2px solid var(--line);
+}
+.btn.primary { background: var(--gold); color: var(--stage); border-color: var(--gold); }
+.btn:disabled { opacity: 0.35; cursor: default; }
+
+.record { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+.record .btn.sel-o { background: var(--o); color: var(--stage); border-color: var(--o); }
+.record .btn.sel-x { background: var(--x); color: var(--stage); border-color: var(--x); }
+.tally { margin-left: auto; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+
+/* Round 1 */
+.r1 { display: grid; gap: 20px; }
+.launch {
+  display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
+  background: var(--gold); color: var(--stage); font-family: var(--font-show); font-size: clamp(20px, 2vw, 30px);
+  padding: 14px 26px; border-radius: 14px; justify-self: start;
+}
+.steps { margin: 0; padding-left: 1.4em; display: grid; gap: 6px; }
+.clues { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.clue { background: var(--panel); border-radius: 12px; padding: 14px 16px; }
+.clue b { display: block; color: var(--gold); font-size: 1.05em; }
+.note { color: var(--ink-dim); font-size: 0.92em; margin: 0; max-width: 75ch; }
+
+/* Scoreboard */
+.score {
+  background: var(--stage-2); border: 2px solid var(--line); border-radius: 18px; padding: 18px;
+  display: grid; gap: 12px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px);
+}
+.score h2 { font-family: var(--font-show); font-weight: 400; font-size: 26px; margin: 0; color: var(--gold); }
+.player { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 6px; align-items: center; }
+.player input {
+  font: inherit; font-weight: 700; color: var(--ink); background: transparent; min-width: 0; width: 100%;
+  border: 0; border-bottom: 2px dashed var(--line); padding: 4px 2px;
+}
+.player .pts { font-family: var(--font-show); font-size: 28px; min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
+.player.lead .pts { color: var(--gold); }
+.mini { font: inherit; font-weight: 700; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; border: 2px solid var(--line); background: var(--panel); color: var(--ink); }
+.score-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.score-actions .btn { padding: 6px 12px; font-size: 0.9em; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal { animation: pop 260ms ease-out; }
+  @keyframes pop { from { transform: scale(0.97); opacity: 0.4; } to { transform: none; opacity: 1; } }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>AI냐 <span class="vs">진짜냐</span></h1>
+      <p class="sub">세 라운드 동안 AI를 의심하고, 속고, 이겨 보자. 점수는 오른쪽 판에 기록.</p>
+    </div>
+    <nav class="rounds" role="tablist" aria-label="라운드 선택">
+      <button role="tab" id="tab-1" aria-selected="true" data-round="1">1R 얼굴</button>
+      <button role="tab" id="tab-2" aria-selected="false" data-round="2">2R 진짜 사실?</button>
+      <button role="tab" id="tab-3" aria-selected="false" data-round="3">3R AI 베팅</button>
+    </nav>
+  </header>
+
+  <div class="main">
+    <section class="board" id="board" aria-live="polite"></section>
+
+    <aside class="score" aria-label="점수판">
+      <h2>점수판</h2>
+      <div id="players" style="display:grid;gap:10px"></div>
+      <div class="score-actions">
+        <button class="btn" id="add-player">+ 사람 추가</button>
+        <button class="btn" id="reset-score">점수 0으로</button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function () {
+  const R2 = [
+    { q: "문어는 심장이 3개다.", a: true, why: "아가미로 피를 보내는 심장 2개, 온몸으로 보내는 심장 1개. 피 색깔도 파란색이다." },
+    { q: "금붕어의 기억력은 3초밖에 안 된다.", a: false, why: "실험해 보면 금붕어는 몇 달 동안 기억한다. 사람들이 워낙 많이 하는 말이라 AI도 따라 말하기 쉬운 문장이다." },
+    { q: "클레오파트라는 피라미드가 지어진 때보다 아이폰이 나온 때에 더 가까운 시대에 살았다.", a: true, why: "대피라미드는 기원전 2560년쯤, 클레오파트라는 기원전 69~30년, 아이폰은 2007년. 피라미드와는 약 2500년, 아이폰과는 약 2040년 차이." },
+    { q: "1998년, 한국 바둑 AI '알파돌'이 이창호 9단을 이기며 세계를 놀라게 했다.", a: false, why: "통째로 지어낸 문장. 연도, 이름, 사람이 구체적이라 진짜처럼 들린다. 세계가 놀란 건 2016년 알파고와 이세돌 9단의 대국이다. 이렇게 그럴듯한 가짜를 AI가 말하는 걸 '환각'이라고 한다." },
+    { q: "바나나는 식물학적으로 '베리(장과)'에 속하지만, 딸기는 아니다.", a: true, why: "식물학에서 베리는 씨가 과육 안에 들어 있는 열매. 바나나, 포도, 토마토는 베리이고, 씨가 겉에 붙은 딸기는 베리가 아니다." },
+    { q: "번개는 같은 곳에 두 번 치지 않는다.", a: false, why: "높은 건물은 번개를 계속 맞는다. 뉴욕 엠파이어 스테이트 빌딩은 1년에 20번 넘게 맞는다." },
+    { q: "비행기의 '블랙박스'는 실제로는 주황색이다.", a: true, why: "사고 현장에서 눈에 잘 띄도록 밝은 주황색으로 칠한다." },
+    { q: "혀는 부위마다 느끼는 맛이 정해져 있다. 혀끝은 단맛, 안쪽은 쓴맛.", a: false, why: "혀 전체에서 모든 맛을 느낀다. 옛날 교과서에 실린 '혀 지도'는 오래된 논문을 잘못 해석해서 퍼진 이야기다." },
+    { q: "상어는 나무보다 먼저 지구에 나타났다.", a: true, why: "상어는 약 4억 5천만 년 전, 나무는 약 3억 8천만 년 전에 나타났다." },
+    { q: "고양이는 단맛을 아주 좋아해서 사람보다 단맛을 더 잘 느낀다.", a: false, why: "반대다. 고양이는 단맛을 느끼는 유전자가 고장 나 있어서 단맛을 거의 못 느낀다." }
+  ];
+
+  const R3 = [
+    { q: "strawberry라는 단어에 r은 몇 개야?", ans: "3개", why: "AI는 글자를 한 자씩 보지 않고 '토큰'이라는 조각 단위로 읽는다. 그래서 예전 AI들은 이 문제를 자주 틀렸다." },
+    { q: "9.11과 9.9 중에 어느 게 더 커?", ans: "9.9", why: "9월 11일 같은 날짜나 프로그램 버전 번호(9.11이 9.9보다 나중)처럼 보여서 헷갈린 적이 많은 문제다." },
+    { q: "앨리스에게는 오빠 3명과 언니 2명이 있어. 앨리스의 오빠 한 명에게 여자 형제는 몇 명이야?", ans: "3명 (언니 2명 + 앨리스)", why: "앨리스 자신을 빼먹는 실수를 자주 한다. 사람도 잘 틀리는 문제." },
+    { q: "'기러기'처럼 거꾸로 읽어도 똑같은 한국어 단어 5개만 말해줘.", ans: "예: 기러기, 토마토, 스위스, 일요일, 별똥별", why: "한글을 글자 단위로 뒤집는 건 AI에게 생각보다 어렵다. 거꾸로 하면 다른 단어가 되는 걸 섞어 내놓는지 하나씩 확인해 보자." },
+    { q: "1부터 100까지 숫자를 다 쓰면 숫자 '9'는 몇 번 나와?", ans: "20번", why: "9, 19, 29 … 89, 99의 일의 자리 10번 + 90~99의 십의 자리 10번. 99는 두 번 센다." },
+    { q: "오늘 우리가 저녁으로 뭘 먹었게?", ans: "\"모른다\"고 말하면 AI 승리", why: "AI는 우리 저녁을 알 방법이 없다. 모르는 걸 솔직히 모른다고 하는지, 아니면 그럴듯하게 지어내는지 보는 문제." }
+  ];
+
+  let round = 1;
+  const idx = { 2: 0, 3: 0 };
+  const shown = { 2: new Set(), 3: new Set() };
+  const aiResult = {}; // r3 index -> 'o' | 'x'
+
+  const board = document.getElementById("board");
+  const tabs = document.querySelectorAll("nav.rounds button");
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+  function dots(n, cur) { let h = ""; for (let i = 0; i < n; i++) h += `<span class="${i <= cur ? "on" : ""}"></span>`; return `<div class="dots" aria-hidden="true">${h}</div>`; }
+
+  function renderR1() {
+    board.innerHTML = `
+      <div class="r1">
+        <div>
+          <div class="round-label">ROUND 1</div>
+          <h2 class="round-title">둘 중 진짜 사람 얼굴은?</h2>
+          <p class="rule">화면에 얼굴 사진 두 장이 나온다. 한 장은 실제 사람, 한 장은 AI가 만든 가짜 사람이다. 10문제를 풀고 맞힌 개수가 그대로 점수.</p>
+        </div>
+        <a class="launch" href="https://www.whichfaceisreal.com/" target="_blank" rel="noopener">퀴즈 사이트 열기 ↗</a>
+        <ol class="steps">
+          <li>사이트를 TV 화면에 띄운다.</li>
+          <li>사진이 나오면 모두 종이에 <b>왼쪽 / 오른쪽</b>을 적는다. 말하면 반칙.</li>
+          <li>진행자가 클릭해서 정답 확인. 10문제 뒤 맞힌 개수를 점수판에 더한다.</li>
+        </ol>
+        <div>
+          <p class="rule" style="margin-bottom:10px"><b>AI 얼굴을 잡아내는 단서</b> (문제 다 푼 다음에 알려 주기)</p>
+          <div class="clues">
+            <div class="clue"><b>배경</b>뒤쪽 물체나 글자가 녹아내린 것처럼 일그러져 있다.</div>
+            <div class="clue"><b>귀걸이·안경</b>양쪽 모양이 서로 다르거나 테가 끊겨 있다.</div>
+            <div class="clue"><b>머리카락 끝</b>배경과 섞여서 번지거나 이상한 덩어리가 생긴다.</div>
+            <div class="clue"><b>치아·옷깃</b>이 개수가 이상하거나 옷 무늬가 이어지지 않는다.</div>
+          </div>
+        </div>
+        <p class="note">이 사이트 사진은 몇 년 전 AI로 만든 것이라 단서가 보이는 편이다. 요즘 AI가 만든 사진은 전문가도 구별하기 어렵다. 그래서 사진만 보고 믿으면 안 된다는 이야기로 이어가면 좋다.</p>
+      </div>`;
+  }
+
+  function renderR2() {
+    const i = idx[2], item = R2[i], open = shown[2].has(i);
+    board.innerHTML = `
+      <div class="round-label">ROUND 2</div>
+      <h2 class="round-title">진짜 사실일까, AI가 지어낸 가짜일까?</h2>
+      <p class="rule">진짜라고 생각하면 O, 가짜라고 생각하면 X. 셋 셀 때 동시에 손으로 표시. 맞힌 사람 +1.</p>
+      <div class="counter">${dots(R2.length, i)} <span>${i + 1} / ${R2.length}</span></div>
+      <p class="question">${esc(item.q)}</p>
+      ${open ? `
+        <div class="reveal ${item.a ? "true" : "false"}">
+          <div class="verdict">${item.a ? "O · 진짜 사실" : "X · 가짜"}</div>
+          <p>${esc(item.why)}</p>
+        </div>` : `
+        <div class="ox" aria-hidden="true">
+          <div class="big o" style="cursor:default;text-align:center"><span class="mark">O</span>진짜</div>
+          <div class="big x" style="cursor:default;text-align:center"><span class="mark">X</span>가짜</div>
+        </div>`}
+      <div class="controls">
+        <button class="btn" id="prev" ${i === 0 ? "disabled" : ""}>← 이전</button>
+        ${open ? "" : `<button class="btn primary" id="show">정답 공개</button>`}
+        <button class="btn ${open ? "primary" : ""}" id="next" ${i === R2.length - 1 ? "disabled" : ""}>다음 →</button>
+      </div>`;
+    wireNav(2, R2.length);
+  }
+
+  function renderR3() {
+    const i = idx[3], item = R3[i], open = shown[3].has(i), res = aiResult[i];
+    const ai = Object.values(aiResult);
+    const win = ai.filter(v => v === "o").length, lose = ai.filter(v => v === "x").length;
+    board.innerHTML = `
+      <div class="round-label">ROUND 3</div>
+      <h2 class="round-title">AI가 맞힐까? 베팅 타임</h2>
+      <p class="rule">문제를 보고 "AI가 맞힌다(O)"와 "틀린다(X)" 중 하나에 건다. 진행자가 AI 채팅창에 아래 질문을 그대로 입력하고, 예측이 맞은 사람 +1.</p>
+      <div class="counter">${dots(R3.length, i)} <span>${i + 1} / ${R3.length}</span></div>
+      <p class="question"><span class="prompt-q">${esc(item.q)}</span></p>
+      <div class="record">
+        <span>AI 실제 결과:</span>
+        <button class="btn ${res === "o" ? "sel-o" : ""}" data-res="o">맞힘</button>
+        <button class="btn ${res === "x" ? "sel-x" : ""}" data-res="x">틀림</button>
+        <span class="tally">AI 전적 ${win}승 ${lose}패</span>
+      </div>
+      ${open ? `
+        <div class="reveal">
+          <div class="verdict">정답: <span class="ans">${esc(item.ans)}</span></div>
+          <p>${esc(item.why)}</p>
+        </div>` : ""}
+      <div class="controls">
+        <button class="btn" id="prev" ${i === 0 ? "disabled" : ""}>← 이전</button>
+        ${open ? "" : `<button class="btn primary" id="show">정답과 이유 보기</button>`}
+        <button class="btn ${open ? "primary" : ""}" id="next" ${i === R3.length - 1 ? "disabled" : ""}>다음 →</button>
+      </div>`;
+    board.querySelectorAll("[data-res]").forEach(b => b.addEventListener("click", () => {
+      aiResult[i] = aiResult[i] === b.dataset.res ? undefined : b.dataset.res;
+      if (aiResult[i] === undefined) delete aiResult[i];
+      renderR3();
+    }));
+    wireNav(3, R3.length);
+  }
+
+  function wireNav(r, n) {
+    const p = document.getElementById("prev"), nx = document.getElementById("next"), s = document.getElementById("show");
+    if (p) p.onclick = () => { if (idx[r] > 0) { idx[r]--; render(); } };
+    if (nx) nx.onclick = () => { if (idx[r] < n - 1) { idx[r]++; render(); } };
+    if (s) s.onclick = () => { shown[r].add(idx[r]); render(); };
+  }
+
+  function render() {
+    tabs.forEach(t => t.setAttribute("aria-selected", String(+t.dataset.round === round)));
+    if (round === 1) renderR1(); else if (round === 2) renderR2(); else renderR3();
+  }
+  tabs.forEach(t => t.addEventListener("click", () => { round = +t.dataset.round; render(); }));
+
+  document.addEventListener("keydown", e => {
+    if (e.target.tagName === "INPUT" || round === 1) return;
+    if (e.key === "ArrowRight") document.getElementById("next")?.click();
+    if (e.key === "ArrowLeft") document.getElementById("prev")?.click();
+    if (e.key === " " || e.key === "Enter") { const s = document.getElementById("show"); if (s) { e.preventDefault(); s.click(); } }
+  });
+
+  // ---- Scoreboard ----
+  const KEY = "ai-quizshow-players";
+  let players;
+  try { players = JSON.parse(localStorage.getItem(KEY)); } catch (e) { players = null; }
+  if (!Array.isArray(players) || !players.length) players = [1, 2, 3, 4].map(n => ({ name: "친구 " + n, pts: 0 }));
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(players)); } catch (e) {} }
+
+  const box = document.getElementById("players");
+  function renderPlayers() {
+    const max = Math.max(...players.map(p => p.pts));
+    box.innerHTML = players.map((p, i) => `
+      <div class="player ${p.pts > 0 && p.pts === max ? "lead" : ""}">
+        <input id="pname-${i}" value="${esc(p.name)}" aria-label="${i + 1}번 이름">
+        <button class="mini" data-d="-1" data-i="${i}" aria-label="${esc(p.name)} 1점 빼기">−</button>
+        <button class="mini" data-d="1" data-i="${i}" aria-label="${esc(p.name)} 1점 더하기">+</button>
+        <span class="pts">${p.pts}</span>
+      </div>`).join("");
+    box.querySelectorAll("input").forEach((inp, i) => inp.addEventListener("input", () => { players[i].name = inp.value; save(); }));
+    box.querySelectorAll(".mini").forEach(b => b.addEventListener("click", () => {
+      players[+b.dataset.i].pts += +b.dataset.d; save(); renderPlayers();
+    }));
+  }
+  document.getElementById("add-player").onclick = () => { players.push({ name: "친구 " + (players.length + 1), pts: 0 }); save(); renderPlayers(); };
+  const resetBtn = document.getElementById("reset-score");
+  let armed = false;
+  resetBtn.onclick = () => {
+    if (!armed) { armed = true; resetBtn.textContent = "한 번 더 누르면 초기화"; setTimeout(() => { armed = false; resetBtn.textContent = "점수 0으로"; }, 3000); return; }
+    players.forEach(p => p.pts = 0); save(); renderPlayers(); armed = false; resetBtn.textContent = "점수 0으로";
+  };
+
+  renderPlayers();
+  render();
+})();
+</script>
